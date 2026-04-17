@@ -1,0 +1,196 @@
+{
+    "name": "DynamicGitToRaw_PL",
+    "objectId": "08a254f7-5ee7-44ed-a5bb-896354086f4d",
+    "properties": {
+        "activities": [
+            {
+                "name": "ForEachGit",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "LookupGit",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('LookupGit').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "Dynamic Copy data",
+                            "type": "Copy",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "DelimitedTextSource",
+                                    "storeSettings": {
+                                        "type": "HttpReadSettings",
+                                        "requestMethod": "GET"
+                                    },
+                                    "formatSettings": {
+                                        "type": "DelimitedTextReadSettings"
+                                    },
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "type": "DelimitedText",
+                                        "typeProperties": {
+                                            "location": {
+                                                "type": "HttpServerLocation",
+                                                "relativeUrl": {
+                                                    "value": "@item().p_rel_url",
+                                                    "type": "Expression"
+                                                }
+                                            },
+                                            "columnDelimiter": ",",
+                                            "escapeChar": "\\",
+                                            "firstRowAsHeader": true,
+                                            "quoteChar": "\""
+                                        },
+                                        "schema": [],
+                                        "externalReferences": {
+                                            "connection": "8075410b-a53c-4820-92ee-48ffca741822"
+                                        }
+                                    }
+                                },
+                                "sink": {
+                                    "type": "DelimitedTextSink",
+                                    "storeSettings": {
+                                        "type": "AzureBlobStorageWriteSettings"
+                                    },
+                                    "formatSettings": {
+                                        "type": "DelimitedTextWriteSettings",
+                                        "fileExtension": ".txt"
+                                    },
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "connectionSettings": {
+                                            "name": "adventureworks_lh",
+                                            "properties": {
+                                                "annotations": [],
+                                                "type": "Lakehouse",
+                                                "typeProperties": {
+                                                    "workspaceId": "0c760a85-eb61-480a-8612-7342da5ebbc4",
+                                                    "artifactId": "db1a2d2b-6ea0-42ab-a413-a3751f007e76",
+                                                    "rootFolder": "Files"
+                                                },
+                                                "externalReferences": {
+                                                    "connection": "473d77c7-42b4-40df-806b-a11f92f0c7ac"
+                                                }
+                                            }
+                                        },
+                                        "type": "DelimitedText",
+                                        "typeProperties": {
+                                            "location": {
+                                                "type": "LakehouseLocation",
+                                                "fileName": {
+                                                    "value": "@item().p_file_name",
+                                                    "type": "Expression"
+                                                },
+                                                "folderPath": {
+                                                    "value": "@concat('bronze/',item().p_sub_folder)",
+                                                    "type": "Expression"
+                                                }
+                                            },
+                                            "columnDelimiter": ",",
+                                            "escapeChar": "\\",
+                                            "firstRowAsHeader": true,
+                                            "quoteChar": "\""
+                                        },
+                                        "schema": []
+                                    }
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "typeConversion": true,
+                                    "typeConversionSettings": {
+                                        "allowDataTruncation": true,
+                                        "treatBooleanAsNumber": false
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "LookupGit",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "JsonSource",
+                        "storeSettings": {
+                            "type": "LakehouseReadSettings",
+                            "recursive": true,
+                            "enablePartitionDiscovery": false
+                        },
+                        "formatSettings": {
+                            "type": "JsonReadSettings"
+                        }
+                    },
+                    "firstRowOnly": false,
+                    "datasetSettings": {
+                        "annotations": [],
+                        "connectionSettings": {
+                            "name": "adventureworks_lh",
+                            "properties": {
+                                "annotations": [],
+                                "type": "Lakehouse",
+                                "typeProperties": {
+                                    "workspaceId": "0c760a85-eb61-480a-8612-7342da5ebbc4",
+                                    "artifactId": "db1a2d2b-6ea0-42ab-a413-a3751f007e76",
+                                    "rootFolder": "Files"
+                                },
+                                "externalReferences": {
+                                    "connection": "473d77c7-42b4-40df-806b-a11f92f0c7ac"
+                                }
+                            }
+                        },
+                        "type": "Json",
+                        "typeProperties": {
+                            "location": {
+                                "type": "LakehouseLocation",
+                                "fileName": "git.json",
+                                "folderPath": "parameters"
+                            }
+                        },
+                        "schema": {}
+                    }
+                }
+            }
+        ],
+        "parameters": {
+            "p_rel_url": {
+                "type": "String"
+            },
+            "p_sub_folder": {
+                "type": "String"
+            },
+            "p_file_name": {
+                "type": "String"
+            }
+        },
+        "lastModifiedByObjectId": "5c8b9eac-bf51-49cc-b47c-a59ec8373d01",
+        "lastPublishTime": "2026-04-17T14:49:41Z"
+    }
+}
